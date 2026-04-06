@@ -1,0 +1,63 @@
+{
+  "name": "cordia",
+  "version": "1.0.0",
+  "description": "The official analytics SDK for Discord bots — track commands, users, guilds, and uptime with the Cordia platform.",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "discord",
+    "bot",
+    "analytics",
+    "tracking",
+    "cordia",
+    "sdk",
+    "heartbeat",
+    "uptime",
+    "discord.js"
+  ],
+  "author": "Yogeswar",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yogeswar142/cordia"
+  },
+  "homepage": "https://docs.cordia.dev",
+  "bugs": {
+    "url": "https://github.com/yogeswar142/cordia/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "tsup": "^8.4.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.1.0",
+    "@types/node": "^22.0.0"
+  }
+}
