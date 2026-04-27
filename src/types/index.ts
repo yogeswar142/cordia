@@ -70,12 +70,6 @@ export interface CordiaConfig {
    * @default false
    */
   autoScale?: boolean;
-
-  /**
-   * Request timeout in milliseconds.
-   * @default 10000 (10 seconds)
-   */
-  timeout?: number;
 }
 
 /**
