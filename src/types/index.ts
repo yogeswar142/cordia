@@ -64,6 +64,18 @@ export interface CordiaConfig {
    * @default 10000 (10 seconds)
    */
   timeout?: number;
+
+  /**
+   * Automatically scale batchSize and flushInterval if rate limited.
+   * @default false
+   */
+  autoScale?: boolean;
+
+  /**
+   * Request timeout in milliseconds.
+   * @default 10000 (10 seconds)
+   */
+  timeout?: number;
 }
 
 /**
@@ -80,6 +92,7 @@ export interface ResolvedCordiaConfig {
   flushInterval: number;
   maxRetries: number;
   timeout: number;
+  autoScale: boolean;
 }
 
 // ─────────────────────────────────────────────────────────────

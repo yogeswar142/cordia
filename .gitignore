@@ -6,4 +6,4 @@ dist/
 coverage/
 
 # Git AI script
-git-ai.sh
+cm.sh

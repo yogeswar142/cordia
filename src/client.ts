@@ -71,6 +71,18 @@ export class CordiaClient {
       this.heartbeat.start();
     }
 
+    // Graceful shutdown on process exit
+    if (typeof process !== 'undefined' && process.on) {
+      const handleShutdown = async () => {
+        if (!this.destroyed) {
+          this.logger.info('Received shutdown signal, flushing Cordia events...');
+          await this.destroy();
+        }
+      };
+      process.on('SIGINT', handleShutdown);
+      process.on('SIGTERM', handleShutdown);
+    }
+
     this.logger.info(`Cordia SDK initialized for bot: ${this.config.botId}`);
     this.logger.debug('Config:', {
       baseUrl: this.config.baseUrl,

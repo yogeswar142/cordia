@@ -51,8 +51,7 @@ export class EventQueue {
   }
 
   /**
-   * Flush all queued events to the API.
-   * Sends events grouped by endpoint.
+   * Flush all queued events to the API via track-batch.
    */
   async flush(): Promise<void> {
     if (this.isFlushing || this.queue.length === 0) {
@@ -62,29 +61,43 @@ export class EventQueue {
     this.isFlushing = true;
 
     try {
-      // Take current queue and reset
+      // Enforce backpressure (max 1000 items to avoid memory leaks)
+      if (this.queue.length > 1000) {
+        this.logger.warn(`Queue exceeded 1000 items, dropping oldest ${this.queue.length - 1000} items.`);
+        this.queue = this.queue.slice(this.queue.length - 1000);
+      }
+
+      // Take current queue and reset immediately
       const events = [...this.queue];
       this.queue = [];
 
       this.logger.debug(`Flushing ${events.length} events...`);
 
-      // Group events by endpoint for batch sending
-      const grouped = this.groupByEndpoint(events);
+      const batchPayloads = events.map(e => e.payload);
 
-      // Send each group
-      const promises = Object.entries(grouped).map(async ([endpoint, endpointEvents]) => {
-        for (const event of endpointEvents) {
-          try {
-            await this.http.post(endpoint, event.payload);
-          } catch {
-            this.logger.error(`Failed to send event to ${endpoint}`);
-            // Don't re-queue on failure to prevent infinite loops
+      try {
+        const result = await this.http.post('/track-batch', { botId: this.config.botId, events: batchPayloads });
+        
+        if (!result.success) {
+          if (result.error?.includes('429')) {
+            if (this.config.autoScale) {
+              this.config.batchSize = Math.floor(this.config.batchSize * 1.5) + 10;
+              this.config.flushInterval += 10000;
+              this.startFlushTimer(); // Restart timer with new interval
+              this.logger.warn(`Rate limited! Auto-scaled batchSize to ${this.config.batchSize} and flushInterval to ${this.config.flushInterval}ms`);
+            } else {
+              this.logger.warn('Rate limit exceeded. Consider increasing batchSize or enabling autoScale.');
+            }
           }
+          throw new Error(result.error || 'Failed to send batch');
         }
-      });
-
-      await Promise.allSettled(promises);
-      this.logger.debug('Flush complete');
+        
+        this.logger.debug('Flush complete');
+      } catch (error) {
+        this.logger.error('Failed to send batch, re-queuing events', error);
+        // Backoff: put them back at the front of the queue
+        this.queue = [...events, ...this.queue];
+      }
     } catch (error) {
       this.logger.error('Flush failed', error);
     } finally {
@@ -135,19 +148,5 @@ export class EventQueue {
     }
   }
 
-  /**
-   * Group events by their endpoint.
-   */
-  private groupByEndpoint(events: QueuedEvent[]): Record<string, QueuedEvent[]> {
-    const groups: Record<string, QueuedEvent[]> = {};
 
-    for (const event of events) {
-      if (!groups[event.endpoint]) {
-        groups[event.endpoint] = [];
-      }
-      groups[event.endpoint].push(event);
-    }
-
-    return groups;
-  }
 }

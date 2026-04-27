@@ -9,8 +9,8 @@ const DEFAULT_HEARTBEAT_INTERVAL = 30_000;
 /** Default batch size for event queue */
 const DEFAULT_BATCH_SIZE = 10;
 
-/** Default flush interval: 5 seconds */
-const DEFAULT_FLUSH_INTERVAL = 5_000;
+/** Default flush interval: 60 seconds */
+const DEFAULT_FLUSH_INTERVAL = 60_000;
 
 /** Default max retries on failure */
 const DEFAULT_MAX_RETRIES = 3;
@@ -83,6 +83,7 @@ export function validateConfig(config: CordiaConfig): ResolvedCordiaConfig {
     flushInterval: config.flushInterval ?? DEFAULT_FLUSH_INTERVAL,
     maxRetries: config.maxRetries ?? DEFAULT_MAX_RETRIES,
     timeout: config.timeout ?? DEFAULT_TIMEOUT,
+    autoScale: config.autoScale ?? false,
   };
 }
 
