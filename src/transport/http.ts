@@ -15,6 +15,28 @@ export class HttpTransport {
     this.logger = logger;
   }
 
+  private resolveBotId(): string | null {
+    const configBotId = this.config.botId?.trim();
+    if (configBotId) return configBotId;
+    const runtimeBotId = this.config.discordClient?.user?.id;
+    if (runtimeBotId && runtimeBotId.trim()) return runtimeBotId.trim();
+    return null;
+  }
+
+  private getCommonHeaders(extra: Record<string, string> = {}): Record<string, string> {
+    const botId = this.resolveBotId();
+    if (!botId) {
+      throw new Error('Cordia bot id is unavailable. Provide botId or pass discordClient after ready.');
+    }
+    return {
+      'Authorization': `Bearer ${this.config.apiKey}`,
+      'X-Bot-Id': botId,
+      'X-Cordia-Sdk-Version': '1.1.5',
+      'User-Agent': `cordia-sdk/1.1.5 node/${process.version}`,
+      ...extra,
+    };
+  }
+
   /**
    * Send a GET request to the Cordia API.
    * Includes automatic retry with exponential backoff.
@@ -36,11 +58,7 @@ export class HttpTransport {
         try {
           const response = await fetch(url, {
             method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${this.config.apiKey}`,
-              'X-Bot-Id': this.config.botId,
-              'User-Agent': `cordia-sdk/1.0.0 node/${process.version}`,
-            },
+            headers: this.getCommonHeaders(),
             signal: controller.signal,
           });
 
@@ -78,8 +96,12 @@ export class HttpTransport {
    */
   async post(endpoint: string, payload: Record<string, unknown>): Promise<ApiResponse> {
     const url = `${this.config.baseUrl}${endpoint}`;
+    const botId = this.resolveBotId();
+    if (!botId) {
+      return { success: false, error: 'Cordia bot id is unavailable. Wait for client ready or set botId.' };
+    }
     const body = JSON.stringify({
-      botId: this.config.botId,
+      botId,
       ...payload,
     });
 
@@ -101,12 +123,7 @@ export class HttpTransport {
         try {
           const response = await fetch(url, {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${this.config.apiKey}`,
-              'X-Bot-Id': this.config.botId,
-              'User-Agent': `cordia-sdk/1.0.0 node/${process.version}`,
-            },
+            headers: this.getCommonHeaders({ 'Content-Type': 'application/json' }),
             body,
             signal: controller.signal,
           });

@@ -3,6 +3,7 @@ import type {
   ResolvedCordiaConfig,
   TrackCommandPayload,
   TrackUserPayload,
+  ShardMeta,
 } from './types';
 import { validateConfig } from './utils/validators';
 import { Logger } from './utils/logger';
@@ -28,7 +29,7 @@ import { GuildsModule } from './modules/guilds';
  *
  * const cordia = new CordiaClient({
  *   apiKey: 'your-api-key',
- *   botId: 'your-bot-id',
+ *   discordClient: client,
  * });
  *
  * // Track a command
@@ -62,8 +63,8 @@ export class CordiaClient {
 
     // Initialize modules
     this.heartbeat = new HeartbeatModule(this.config, this.http, this.logger);
-    this.commands = new CommandsModule(this.queue, this.logger);
-    this.users = new UsersModule(this.queue, this.logger);
+    this.commands = new CommandsModule(this.queue, this.logger, this.config);
+    this.users = new UsersModule(this.queue, this.logger, this.config);
     this.guilds = new GuildsModule(this.config, this.http, this.logger);
 
     // Auto-start heartbeat if configured
@@ -86,7 +87,7 @@ export class CordiaClient {
       process.on('SIGTERM', handleShutdown);
     }
 
-    this.logger.info(`Cordia SDK initialized for bot: ${this.config.botId}`);
+    this.logger.info(`Cordia SDK initialized (bot id is auto-detected at runtime)`);
     this.logger.debug('Config:', {
       baseUrl: this.config.baseUrl,
       heartbeatInterval: this.config.heartbeatInterval,
@@ -159,9 +160,9 @@ export class CordiaClient {
    * });
    * ```
    */
-  async postGuildCount(count: number): Promise<void> {
+  async postGuildCount(count: number, shardOverrides?: Partial<ShardMeta>): Promise<void> {
     this.ensureNotDestroyed();
-    await this.guilds.postCount(count);
+    await this.guilds.postCount(count, shardOverrides);
   }
 
   // ─────────────────────────────────────────────────────────
@@ -277,10 +278,10 @@ export class CordiaClient {
       const response = await this.http.get('/auth/verify');
 
       if (response.success) {
-        this.logger.info(`Cordia SDK verified successfully for bot: ${this.config.botId}`);
+        this.logger.info(`Cordia SDK verified successfully`);
       } else if (response.status === 401 || response.status === 404) {
         console.error(`\n🚨 CORDIA SDK DISABLED: ${response.error || 'Invalid API Key'}`);
-        console.error('Please check your API key and Bot ID in the Cordia dashboard.\n');
+        console.error('Please check your API key and bot identity in the Cordia dashboard.\n');
 
         // Disable the SDK to prevent useless network spam
         this.heartbeat.stop();

@@ -25,7 +25,7 @@ const client = new Client({
 // ─────────────────────────────────────────────────────────────
 const cordia = new CordiaClient({
   apiKey: process.env.CORDIA_API_KEY!,
-  botId: process.env.CORDIA_BOT_ID!,
+  discordClient: client, // botId auto-detected from client.user.id
   // baseUrl defaults to CORDIA_API_URL env var or https://api.cordialane.com/api/v1
   debug: process.env.NODE_ENV === 'development',
 });

@@ -16,11 +16,13 @@ npm install cordia
 ## Quick Start
 
 ```typescript
+import { Client, GatewayIntentBits } from 'discord.js';
 import { CordiaClient } from 'cordia';
 
+const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 const cordia = new CordiaClient({
   apiKey: process.env.CORDIA_API_KEY,
-  botId: process.env.CORDIA_BOT_ID,
+  discordClient: client, // botId auto-detected from client.user.id
 });
 
 // Track a command
@@ -41,7 +43,7 @@ import { CordiaClient } from 'cordia';
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 const cordia = new CordiaClient({
   apiKey: process.env.CORDIA_API_KEY,
-  botId: process.env.CORDIA_BOT_ID,
+  discordClient: client, // auto-detects botId + shard metadata
 });
 
 client.on('ready', async () => {
@@ -72,7 +74,8 @@ client.login(process.env.DISCORD_TOKEN);
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `apiKey` | `string` | required | API key from the Cordia dashboard |
-| `botId` | `string` | required | Your bot's unique ID |
+| `discordClient` | `Client` | required | Discord.js client used for botId/shard auto-detection |
+| `botId` | `string` | optional | Manual bot ID override (rarely needed) |
 | `baseUrl` | `string` | `https://api.cordialane.com/api/v1` | API endpoint |
 | `heartbeatInterval` | `number` | `30000` | Heartbeat interval (ms) |
 | `autoHeartbeat` | `boolean` | `true` | Start heartbeat on init |

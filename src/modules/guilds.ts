@@ -1,7 +1,8 @@
-import type { ResolvedCordiaConfig } from '../types';
+import type { GuildCountPayload, ResolvedCordiaConfig } from '../types';
 import { HttpTransport } from '../transport/http';
 import { Logger } from '../utils/logger';
 import { validateGuildCount } from '../utils/validators';
+import { resolveShardMeta } from '../utils/sharding';
 
 /**
  * Guild/server count tracking module.
@@ -40,7 +41,7 @@ export class GuildsModule {
    * });
    * ```
    */
-  async postCount(count: number): Promise<void> {
+  async postCount(count: number, shardOverrides?: Omit<GuildCountPayload, 'count'>): Promise<void> {
     try {
       validateGuildCount(count);
 
@@ -49,6 +50,7 @@ export class GuildsModule {
       const response = await this.http.post('/guild-count', {
         count,
         timestamp: new Date().toISOString(),
+        ...resolveShardMeta(this.config, shardOverrides),
       });
 
       if (response.success) {

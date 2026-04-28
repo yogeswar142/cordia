@@ -24,15 +24,15 @@ const DEFAULT_TIMEOUT = 10_000;
  */
 export function validateConfig(config: CordiaConfig): ResolvedCordiaConfig {
   if (!config) {
-    throw new Error('[Cordia] Config object is required. Pass at least { apiKey, botId }.');
+    throw new Error('[Cordia] Config object is required. Pass at least { apiKey, discordClient }.');
   }
 
   if (!config.apiKey || typeof config.apiKey !== 'string' || config.apiKey.trim() === '') {
     throw new Error('[Cordia] "apiKey" is required and must be a non-empty string.');
   }
 
-  if (!config.botId || typeof config.botId !== 'string' || config.botId.trim() === '') {
-    throw new Error('[Cordia] "botId" is required and must be a non-empty string.');
+  if (!config.botId && !config.discordClient) {
+    throw new Error('[Cordia] Provide either "discordClient" (recommended) or "botId".');
   }
 
   if (config.heartbeatInterval !== undefined) {
@@ -74,7 +74,7 @@ export function validateConfig(config: CordiaConfig): ResolvedCordiaConfig {
 
   return {
     apiKey: config.apiKey.trim(),
-    botId: config.botId.trim(),
+    botId: config.botId?.trim(),
     baseUrl,
     heartbeatInterval: config.heartbeatInterval ?? DEFAULT_HEARTBEAT_INTERVAL,
     autoHeartbeat: config.autoHeartbeat ?? true,
@@ -84,6 +84,9 @@ export function validateConfig(config: CordiaConfig): ResolvedCordiaConfig {
     maxRetries: config.maxRetries ?? DEFAULT_MAX_RETRIES,
     timeout: config.timeout ?? DEFAULT_TIMEOUT,
     autoScale: config.autoScale ?? false,
+    discordClient: config.discordClient,
+    shardId: config.shardId ?? 0,
+    totalShards: config.totalShards ?? 1,
   };
 }
 

@@ -13,9 +13,10 @@ export interface CordiaConfig {
   apiKey: string;
 
   /**
-   * Your bot's unique ID from the Cordia dashboard.
+   * Optional bot ID override.
+   * By default, Cordia auto-detects this from discordClient.user.id.
    */
-  botId: string;
+  botId?: string;
 
   /**
    * Interval (in milliseconds) between heartbeat pings.
@@ -64,6 +65,26 @@ export interface CordiaConfig {
    * @default false
    */
   autoScale?: boolean;
+
+  /**
+   * Optional discord.js client reference for shard auto-detection.
+   */
+  discordClient?: {
+    user?: {
+      id?: string;
+    };
+    shard?: {
+      ids?: number[];
+      count?: number;
+    };
+  };
+
+  /**
+   * Override shard metadata manually (rarely needed).
+   */
+  shardId?: number;
+  totalShards?: number;
+  baseUrl?: string;
 }
 
 /**
@@ -71,7 +92,7 @@ export interface CordiaConfig {
  */
 export interface ResolvedCordiaConfig {
   apiKey: string;
-  botId: string;
+  botId?: string;
   baseUrl: string;
   heartbeatInterval: number;
   autoHeartbeat: boolean;
@@ -81,6 +102,14 @@ export interface ResolvedCordiaConfig {
   maxRetries: number;
   timeout: number;
   autoScale: boolean;
+  discordClient?: CordiaConfig['discordClient'];
+  shardId: number;
+  totalShards: number;
+}
+
+export interface ShardMeta {
+  shardId: number;
+  totalShards: number;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -99,6 +128,8 @@ export interface TrackCommandPayload {
   guildId?: string;
   /** Additional metadata about the command execution */
   metadata?: Record<string, unknown>;
+  shardId?: number;
+  totalShards?: number;
 }
 
 /**
@@ -111,6 +142,8 @@ export interface TrackUserPayload {
   guildId?: string;
   /** The type of action performed (e.g., "message", "reaction", "voice_join") */
   action?: string;
+  shardId?: number;
+  totalShards?: number;
 }
 
 /**
@@ -119,6 +152,8 @@ export interface TrackUserPayload {
 export interface GuildCountPayload {
   /** Current number of guilds/servers the bot is in */
   count: number;
+  shardId?: number;
+  totalShards?: number;
 }
 
 /**
@@ -129,6 +164,8 @@ export interface HeartbeatPayload {
   timestamp: string;
   /** Bot uptime in milliseconds */
   uptime: number;
+  shardId?: number;
+  totalShards?: number;
 }
 
 // ─────────────────────────────────────────────────────────────

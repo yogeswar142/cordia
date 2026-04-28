@@ -1,6 +1,7 @@
 import type { ResolvedCordiaConfig } from '../types';
 import { HttpTransport } from '../transport/http';
 import { Logger } from '../utils/logger';
+import { resolveShardMeta } from '../utils/sharding';
 
 /**
  * Heartbeat module — sends periodic heartbeat pings to the Cordia API.
@@ -91,6 +92,7 @@ export class HeartbeatModule {
     const payload = {
       timestamp: new Date().toISOString(),
       uptime: this.getUptime(),
+      ...resolveShardMeta(this.config),
     };
 
     this.logger.debug('Sending heartbeat...', payload);
