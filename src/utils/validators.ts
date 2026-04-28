@@ -1,7 +1,7 @@
 import type { CordiaConfig, ResolvedCordiaConfig } from '../types';
 
 /** Default API base URL — can be overridden via env or config */
-const DEFAULT_BASE_URL = 'https://api.cordialane.com/api/v1';
+const DEFAULT_BASE_URL = 'https://cordlane-brain.onrender.com/api/v1';
 
 /** Default heartbeat interval: 30 seconds */
 const DEFAULT_HEARTBEAT_INTERVAL = 30_000;
@@ -36,8 +36,8 @@ export function validateConfig(config: CordiaConfig): ResolvedCordiaConfig {
   }
 
   if (config.heartbeatInterval !== undefined) {
-    if (typeof config.heartbeatInterval !== 'number' || config.heartbeatInterval < 5000) {
-      throw new Error('[Cordia] "heartbeatInterval" must be a number >= 5000 (5 seconds).');
+    if (typeof config.heartbeatInterval !== 'number' || config.heartbeatInterval < 30000) {
+      throw new Error('[Cordia] "heartbeatInterval" must be a number >= 30000 (30 seconds).');
     }
   }
 
@@ -48,8 +48,8 @@ export function validateConfig(config: CordiaConfig): ResolvedCordiaConfig {
   }
 
   if (config.flushInterval !== undefined) {
-    if (typeof config.flushInterval !== 'number' || config.flushInterval < 1000) {
-      throw new Error('[Cordia] "flushInterval" must be a number >= 1000 (1 second).');
+    if (typeof config.flushInterval !== 'number' || config.flushInterval < 60000) {
+      throw new Error('[Cordia] "flushInterval" must be a number >= 60000 (60 seconds).');
     }
   }
 
