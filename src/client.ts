@@ -279,9 +279,9 @@ export class CordiaClient {
       if (response.success) {
         this.logger.info(`Cordia SDK verified successfully for bot: ${this.config.botId}`);
       } else if (response.status === 401 || response.status === 404) {
-        this.logger.error(`\n\n🚨 CORDIA SDK DISABLED: ${response.error || 'Invalid API Key'}`);
-        this.logger.error('Please check your API key and Bot ID in the Cordia dashboard.\n');
-        
+        console.error(`\n🚨 CORDIA SDK DISABLED: ${response.error || 'Invalid API Key'}`);
+        console.error('Please check your API key and Bot ID in the Cordia dashboard.\n');
+
         // Disable the SDK to prevent useless network spam
         this.heartbeat.stop();
         this.destroyed = true;

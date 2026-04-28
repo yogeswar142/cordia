@@ -18,12 +18,6 @@ export interface CordiaConfig {
   botId: string;
 
   /**
-   * Base URL of the Cordia API.
-   * @default Uses CORDIA_API_URL env var, or 'https://api.cordialane.com/api/v1'
-   */
-  baseUrl?: string;
-
-  /**
    * Interval (in milliseconds) between heartbeat pings.
    * @default 30000 (30 seconds)
    */
