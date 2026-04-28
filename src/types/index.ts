@@ -149,6 +149,7 @@ export interface ApiResponse {
   message?: string;
   error?: string;
   data?: unknown;
+  status?: number;
 }
 
 /**

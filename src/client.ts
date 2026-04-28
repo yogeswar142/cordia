@@ -71,6 +71,9 @@ export class CordiaClient {
       this.heartbeat.start();
     }
 
+    // Verify credentials in background
+    this.verifyCredentials();
+
     // Graceful shutdown on process exit
     if (typeof process !== 'undefined' && process.on) {
       const handleShutdown = async () => {
@@ -262,6 +265,33 @@ export class CordiaClient {
   private ensureNotDestroyed(): void {
     if (this.destroyed) {
       this.logger.warn('Attempted to use Cordia client after it was destroyed');
+    }
+  }
+
+  /**
+   * Verify the API credentials with the backend.
+   * If verification fails (401/404), the SDK disables itself.
+   */
+  private async verifyCredentials(): Promise<void> {
+    try {
+      const response = await this.http.get('/auth/verify');
+
+      if (response.success) {
+        this.logger.info(`Cordia SDK verified successfully for bot: ${this.config.botId}`);
+      } else if (response.status === 401 || response.status === 404) {
+        this.logger.error(`\n\n🚨 CORDIA SDK DISABLED: ${response.error || 'Invalid API Key'}`);
+        this.logger.error('Please check your API key and Bot ID in the Cordia dashboard.\n');
+        
+        // Disable the SDK to prevent useless network spam
+        this.heartbeat.stop();
+        this.destroyed = true;
+        await this.queue.flush().catch(() => {}); // Try one last flush
+      } else {
+        // Network error or 5xx — don't disable, just warn
+        this.logger.warn(`Cordia verification skipped: ${response.error || 'API unreachable'}. The SDK will continue to attempt tracking.`);
+      }
+    } catch (error) {
+      this.logger.debug('Verification error:', error);
     }
   }
 }

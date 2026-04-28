@@ -16,6 +16,63 @@ export class HttpTransport {
   }
 
   /**
+   * Send a GET request to the Cordia API.
+   * Includes automatic retry with exponential backoff.
+   */
+  async get(endpoint: string): Promise<ApiResponse> {
+    const url = `${this.config.baseUrl}${endpoint}`;
+    let lastError: Error | null = null;
+
+    for (let attempt = 0; attempt <= this.config.maxRetries; attempt++) {
+      try {
+        if (attempt > 0) {
+          const delay = this.getBackoffDelay(attempt);
+          await this.sleep(delay);
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
+
+        try {
+          const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${this.config.apiKey}`,
+              'X-Bot-Id': this.config.botId,
+              'User-Agent': `cordia-sdk/1.0.0 node/${process.version}`,
+            },
+            signal: controller.signal,
+          });
+
+          clearTimeout(timeoutId);
+
+          if (response.ok) {
+            return await response.json() as ApiResponse;
+          }
+
+          if (response.status >= 400 && response.status < 500 && response.status !== 429) {
+            const errorData = await response.json().catch(() => ({})) as Record<string, string>;
+            return {
+              success: false,
+              error: errorData.error || response.statusText,
+              status: response.status,
+            };
+          }
+
+          lastError = new Error(`HTTP ${response.status}: ${response.statusText}`);
+        } catch (fetchError) {
+          clearTimeout(timeoutId);
+          throw fetchError;
+        }
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+      }
+    }
+
+    return { success: false, error: lastError?.message || 'Unknown error' };
+  }
+
+  /**
    * Send a POST request to the Cordia API.
    * Includes automatic retry with exponential backoff.
    */
