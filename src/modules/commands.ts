@@ -3,6 +3,7 @@ import { EventQueue } from '../transport/queue';
 import { Logger } from '../utils/logger';
 import { validateCommand } from '../utils/validators';
 import { resolveShardMeta } from '../utils/sharding';
+import { debugWarnIfShardInfoMissing } from '../utils/shardDebug';
 
 /**
  * Command tracking module.
@@ -36,6 +37,11 @@ export class CommandsModule {
   track(payload: TrackCommandPayload): void {
     try {
       validateCommand(payload.command);
+      const shardMeta = resolveShardMeta(this.config, {
+        shardId: payload.shardId,
+        totalShards: payload.totalShards,
+      });
+      debugWarnIfShardInfoMissing(this.config, this.logger, shardMeta);
 
       this.queue.enqueue({
         endpoint: '/track-command',
@@ -46,10 +52,7 @@ export class CommandsModule {
           guildId: payload.guildId,
           metadata: payload.metadata,
           timestamp: new Date().toISOString(),
-          ...resolveShardMeta(this.config, {
-            shardId: payload.shardId,
-            totalShards: payload.totalShards,
-          }),
+          ...shardMeta,
         },
       });
 

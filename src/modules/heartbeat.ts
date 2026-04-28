@@ -2,6 +2,7 @@ import type { ResolvedCordiaConfig } from '../types';
 import { HttpTransport } from '../transport/http';
 import { Logger } from '../utils/logger';
 import { resolveShardMeta } from '../utils/sharding';
+import { debugWarnIfShardInfoMissing, logShardDetectionOnce } from '../utils/shardDebug';
 
 /**
  * Heartbeat module — sends periodic heartbeat pings to the Cordia API.
@@ -89,10 +90,14 @@ export class HeartbeatModule {
    * Send a single heartbeat ping.
    */
   private async sendHeartbeat(): Promise<void> {
+    const shardMeta = resolveShardMeta(this.config);
+    debugWarnIfShardInfoMissing(this.config, this.logger, shardMeta);
+    logShardDetectionOnce(this.logger, shardMeta);
+
     const payload = {
       timestamp: new Date().toISOString(),
       uptime: this.getUptime(),
-      ...resolveShardMeta(this.config),
+      ...shardMeta,
     };
 
     this.logger.debug('Sending heartbeat...', payload);

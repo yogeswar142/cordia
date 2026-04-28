@@ -75,8 +75,45 @@ export class EventQueue {
 
       const batchPayloads = events.map(e => e.payload);
 
+      // Batch optimization: if all events share the same shard meta, hoist it to the root.
+      // The API supports root-level shardId/totalShards as a default for all events.
+      let rootShardId: number | undefined;
+      let rootTotalShards: number | undefined;
+      let allSameShard = true;
+      for (const payload of batchPayloads) {
+        const shardId = (payload as any).shardId;
+        const totalShards = (payload as any).totalShards;
+        if (!Number.isInteger(shardId) || !Number.isInteger(totalShards) || totalShards <= 0) {
+          allSameShard = false;
+          break;
+        }
+        if (rootShardId === undefined && rootTotalShards === undefined) {
+          rootShardId = shardId as number;
+          rootTotalShards = totalShards as number;
+          continue;
+        }
+        if (rootShardId !== shardId || rootTotalShards !== totalShards) {
+          allSameShard = false;
+          break;
+        }
+      }
+
+      const eventsForBatch = allSameShard && rootShardId !== undefined && rootTotalShards !== undefined
+        ? batchPayloads.map(p => {
+          const copy: Record<string, unknown> = { ...p };
+          delete (copy as any).shardId;
+          delete (copy as any).totalShards;
+          return copy;
+        })
+        : batchPayloads;
+
       try {
-        const result = await this.http.post('/track-batch', { botId: this.config.botId, events: batchPayloads });
+        const result = await this.http.post('/track-batch', {
+          botId: this.config.botId,
+          shardId: allSameShard ? rootShardId : undefined,
+          totalShards: allSameShard ? rootTotalShards : undefined,
+          events: eventsForBatch
+        });
         
         if (!result.success) {
           if (result.error?.includes('429')) {

@@ -3,6 +3,7 @@ import { EventQueue } from '../transport/queue';
 import { Logger } from '../utils/logger';
 import { validateUserId } from '../utils/validators';
 import { resolveShardMeta } from '../utils/sharding';
+import { debugWarnIfShardInfoMissing } from '../utils/shardDebug';
 
 /**
  * User tracking module.
@@ -35,6 +36,11 @@ export class UsersModule {
   track(payload: TrackUserPayload): void {
     try {
       validateUserId(payload.userId);
+      const shardMeta = resolveShardMeta(this.config, {
+        shardId: payload.shardId,
+        totalShards: payload.totalShards,
+      });
+      debugWarnIfShardInfoMissing(this.config, this.logger, shardMeta);
 
       this.queue.enqueue({
         endpoint: '/track-user',
@@ -44,10 +50,7 @@ export class UsersModule {
           guildId: payload.guildId,
           action: payload.action || 'interaction',
           timestamp: new Date().toISOString(),
-          ...resolveShardMeta(this.config, {
-            shardId: payload.shardId,
-            totalShards: payload.totalShards,
-          }),
+          ...shardMeta,
         },
       });
 
