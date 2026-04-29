@@ -120,12 +120,3 @@ function getEnvVar(name: string): string | undefined {
     return undefined;
   }
 }
-
- */
-function getEnvVar(name: string): string | undefined {
-  try {
-    return process.env[name];
-  } catch {
-    return undefined;
-  }
-}
