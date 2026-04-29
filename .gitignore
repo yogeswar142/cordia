@@ -7,3 +7,6 @@ coverage/
 
 # Git AI script
 cm.sh
+
+# Internal reference docs (not for public repos)
+INTERNAL_SDK_REFERENCE.md

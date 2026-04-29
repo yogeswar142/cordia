@@ -76,7 +76,6 @@ client.login(process.env.DISCORD_TOKEN);
 | `apiKey` | `string` | required | API key from the Cordia dashboard |
 | `discordClient` | `Client` | required | Discord.js client used for botId/shard auto-detection |
 | `botId` | `string` | optional | Manual bot ID override (rarely needed) |
-| `baseUrl` | `string` | `https://api.cordialane.com/api/v1` | API endpoint |
 | `heartbeatInterval` | `number` | `30000` | Heartbeat interval (ms) |
 | `autoHeartbeat` | `boolean` | `true` | Start heartbeat on init |
 | `batchSize` | `number` | `10` | Events before auto-flush |

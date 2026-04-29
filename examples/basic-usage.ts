@@ -15,7 +15,7 @@ const cordia = createClient({
   botId: 'your-bot-id-here',
 
   // Optional: Override the API base URL
-  // baseUrl: 'https://cordlane-brain.onrender.com/api/v1',
+  // baseUrl: 'https://api.cordialane.com/v1',
 
   // Optional: Customize heartbeat interval (default: 30s)
   // heartbeatInterval: 60000,

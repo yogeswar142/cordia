@@ -84,7 +84,6 @@ export interface CordiaConfig {
    */
   shardId?: number;
   totalShards?: number;
-  baseUrl?: string;
 }
 
 /**

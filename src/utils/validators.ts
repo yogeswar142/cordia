@@ -1,7 +1,7 @@
 import type { CordiaConfig, ResolvedCordiaConfig } from '../types';
 
 /** Default API base URL — can be overridden via env or config */
-const DEFAULT_BASE_URL = 'https://cordlane-brain.onrender.com/api/v1';
+const DEFAULT_BASE_URL = 'https://api.cordialane.com/api/v1';
 
 /** Default heartbeat interval: 30 seconds */
 const DEFAULT_HEARTBEAT_INTERVAL = 30_000;
@@ -65,17 +65,10 @@ export function validateConfig(config: CordiaConfig): ResolvedCordiaConfig {
     }
   }
 
-  // Resolve base URL: config > env > default
-  const baseUrl = (
-    config.baseUrl ||
-    getEnvVar('CORDIA_API_URL') ||
-    DEFAULT_BASE_URL
-  ).replace(/\/+$/, ''); // Strip trailing slashes
-
   return {
     apiKey: config.apiKey.trim(),
     botId: config.botId?.trim(),
-    baseUrl,
+    baseUrl: DEFAULT_BASE_URL,
     heartbeatInterval: config.heartbeatInterval ?? DEFAULT_HEARTBEAT_INTERVAL,
     autoHeartbeat: config.autoHeartbeat ?? true,
     debug: config.debug ?? false,
@@ -119,6 +112,15 @@ export function validateGuildCount(count: number): void {
 
 /**
  * Safely read an environment variable (works in Node.js).
+ */
+function getEnvVar(name: string): string | undefined {
+  try {
+    return process.env[name];
+  } catch {
+    return undefined;
+  }
+}
+
  */
 function getEnvVar(name: string): string | undefined {
   try {
