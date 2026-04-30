@@ -12,6 +12,7 @@ export class EventQueue {
   private http: HttpTransport;
   private logger: Logger;
   private flushTimer: ReturnType<typeof setInterval> | null = null;
+  private currentFlushInterval: number;
   private isFlushing = false;
   private isDestroyed = false;
 
@@ -19,6 +20,7 @@ export class EventQueue {
     this.config = config;
     this.http = http;
     this.logger = logger;
+    this.currentFlushInterval = config.flushInterval;
 
     // Start auto-flush timer
     this.startFlushTimer();
@@ -43,9 +45,17 @@ export class EventQueue {
     this.queue.push(queuedEvent);
     this.logger.debug(`Event queued for ${event.endpoint}. Queue size: ${this.queue.length}`);
 
-    // Auto-flush if batch size reached
+    // ADAPTIVE LOGIC: If we are getting events fast, flush sooner.
     if (this.queue.length >= this.config.batchSize) {
-      this.logger.debug('Batch size reached, flushing...');
+      this.logger.debug('Batch size reached, triggering adaptive flush...');
+      
+      // If we hit the batch limit before the timer, the bot is "Busy".
+      // Temporarily speed up the flush interval (min 15s).
+      if (this.currentFlushInterval > 15000) {
+        this.currentFlushInterval = Math.max(15000, this.currentFlushInterval - 5000);
+        this.startFlushTimer(); // Apply new interval
+      }
+      
       void this.flush();
     }
   }
@@ -55,6 +65,11 @@ export class EventQueue {
    */
   async flush(): Promise<void> {
     if (this.isFlushing || this.queue.length === 0) {
+      // If queue is empty, slowly return to the user's base interval
+      if (this.queue.length === 0 && this.currentFlushInterval < this.config.flushInterval) {
+        this.currentFlushInterval = Math.min(this.config.flushInterval, this.currentFlushInterval + 2000);
+        this.startFlushTimer();
+      }
       return;
     }
 
@@ -68,10 +83,12 @@ export class EventQueue {
       }
 
       // Take current queue and reset immediately
-      const events = [...this.queue];
-      this.queue = [];
+      // Hard limit of 500 events per batch to stay under API validation limits
+      const batchLimit = 500;
+      const events = this.queue.slice(0, batchLimit);
+      this.queue = this.queue.slice(batchLimit);
 
-      this.logger.debug(`Flushing ${events.length} events...`);
+      this.logger.debug(`Flushing ${events.length} events (Remaining in queue: ${this.queue.length})...`);
 
       const batchPayloads = events.map(e => e.payload);
 
@@ -159,7 +176,7 @@ export class EventQueue {
 
     this.flushTimer = setInterval(() => {
       void this.flush();
-    }, this.config.flushInterval);
+    }, this.currentFlushInterval);
 
     // Prevent the timer from keeping the Node.js process alive
     if (this.flushTimer && typeof this.flushTimer === 'object' && 'unref' in this.flushTimer) {

@@ -125,8 +125,6 @@ export interface TrackCommandPayload {
   userId?: string;
   /** The guild/server ID where the command was executed */
   guildId?: string;
-  /** Additional metadata about the command execution */
-  metadata?: Record<string, unknown>;
   shardId?: number;
   totalShards?: number;
 }

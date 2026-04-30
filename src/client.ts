@@ -279,6 +279,17 @@ export class CordiaClient {
 
       if (response.success) {
         this.logger.info(`Cordia SDK verified successfully`);
+        
+        // VERSION HANDSHAKE: Check if SDK is out of date
+        const versioning = (response as any).versioning;
+        const currentVersion = '1.2.1'; // Current local version
+        
+        if (versioning) {
+          if (versioning.latestSdkVersion !== currentVersion) {
+            console.warn(`\n[Cordia] 🆕 A new SDK version is available: ${versioning.latestSdkVersion} (You are on ${currentVersion})`);
+            console.warn(`[Cordia] Update to stay optimized: npm install cordia@latest\n`);
+          }
+        }
       } else if (response.status === 401 || response.status === 404) {
         console.error(`\n🚨 CORDIA SDK DISABLED: ${response.error || 'Invalid API Key'}`);
         console.error('Please check your API key and bot identity in the Cordia dashboard.\n');

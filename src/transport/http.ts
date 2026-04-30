@@ -19,7 +19,11 @@ export class HttpTransport {
     const configBotId = this.config.botId?.trim();
     if (configBotId) return configBotId;
     const runtimeBotId = this.config.discordClient?.user?.id;
-    if (runtimeBotId && runtimeBotId.trim()) return runtimeBotId.trim();
+    if (runtimeBotId && runtimeBotId.trim()) {
+      const id = runtimeBotId.trim();
+      this.config.botId = id; // Persist detected ID to config
+      return id;
+    }
     return null;
   }
 
@@ -31,8 +35,8 @@ export class HttpTransport {
     return {
       'Authorization': `Bearer ${this.config.apiKey}`,
       'X-Bot-Id': botId,
-      'X-Cordia-Sdk-Version': '1.1.5',
-      'User-Agent': `cordia-sdk/1.1.5 node/${process.version}`,
+      'X-Cordia-Sdk-Version': '1.2.1',
+      'User-Agent': `cordia-sdk/1.2.1 node/${process.version}`,
       ...extra,
     };
   }
@@ -100,9 +104,16 @@ export class HttpTransport {
     if (!botId) {
       return { success: false, error: 'Cordia bot id is unavailable. Wait for client ready or set botId.' };
     }
+
+    // Clean payload of undefined botId to prevent overwriting the valid one
+    const cleanPayload = { ...payload };
+    if (cleanPayload.botId === undefined) {
+      delete cleanPayload.botId;
+    }
+
     const body = JSON.stringify({
       botId,
-      ...payload,
+      ...cleanPayload,
     });
 
     let lastError: Error | null = null;

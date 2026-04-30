@@ -50,7 +50,6 @@ export class CommandsModule {
           command: payload.command,
           userId: payload.userId,
           guildId: payload.guildId,
-          metadata: payload.metadata,
           timestamp: new Date().toISOString(),
           ...shardMeta,
         },
