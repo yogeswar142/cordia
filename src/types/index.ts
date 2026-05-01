@@ -125,6 +125,10 @@ export interface TrackCommandPayload {
   userId?: string;
   /** The guild/server ID where the command was executed */
   guildId?: string;
+  /** The human-readable name of the guild/server */
+  guildName?: string;
+  /** The user's locale (e.g., "en-US", "fr-FR") */
+  locale?: string;
   shardId?: number;
   totalShards?: number;
 }
@@ -137,6 +141,10 @@ export interface TrackUserPayload {
   userId: string;
   /** The guild/server ID where the user is active */
   guildId?: string;
+  /** The human-readable name of the guild/server */
+  guildName?: string;
+  /** The user's locale (e.g., "en-US", "fr-FR") */
+  locale?: string;
   /** The type of action performed (e.g., "message", "reaction", "voice_join") */
   action?: string;
   shardId?: number;

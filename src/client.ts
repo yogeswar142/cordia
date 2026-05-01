@@ -2,7 +2,6 @@ import type {
   CordiaConfig,
   ResolvedCordiaConfig,
   TrackCommandPayload,
-  TrackUserPayload,
   ShardMeta,
 } from './types';
 import { validateConfig } from './utils/validators';
@@ -11,7 +10,6 @@ import { HttpTransport } from './transport/http';
 import { EventQueue } from './transport/queue';
 import { HeartbeatModule } from './modules/heartbeat';
 import { CommandsModule } from './modules/commands';
-import { UsersModule } from './modules/users';
 import { GuildsModule } from './modules/guilds';
 
 /**
@@ -48,7 +46,6 @@ export class CordiaClient {
   private queue: EventQueue;
   private heartbeat: HeartbeatModule;
   private commands: CommandsModule;
-  private users: UsersModule;
   private guilds: GuildsModule;
   private destroyed = false;
 
@@ -64,7 +61,6 @@ export class CordiaClient {
     // Initialize modules
     this.heartbeat = new HeartbeatModule(this.config, this.http, this.logger);
     this.commands = new CommandsModule(this.queue, this.logger, this.config);
-    this.users = new UsersModule(this.queue, this.logger, this.config);
     this.guilds = new GuildsModule(this.config, this.http, this.logger);
 
     // Auto-start heartbeat if configured
@@ -120,27 +116,43 @@ export class CordiaClient {
     this.commands.track(payload);
   }
 
-  // ─────────────────────────────────────────────────────────
-  // User Tracking
-  // ─────────────────────────────────────────────────────────
-
   /**
-   * Track an active user interaction.
-   * Events are batched and sent periodically.
+   * Auto-detect and track a command execution from a Discord Interaction object.
+   * Supports discord.js and other libraries with similar interaction structures.
    *
-   * @param payload - User tracking data
+   * @param interaction - The Discord interaction object
    * @example
    * ```ts
-   * cordia.trackUser({
-   *   userId: '123456789',
-   *   guildId: '987654321',
-   *   action: 'message',
+   * client.on('interactionCreate', (interaction) => {
+   *   if (interaction.isCommand()) {
+   *     cordia.trackInteraction(interaction);
+   *   }
    * });
    * ```
    */
-  trackUser(payload: TrackUserPayload): void {
+  trackInteraction(interaction: any): void {
     this.ensureNotDestroyed();
-    this.users.track(payload);
+    this.commands.trackFromInteraction(interaction);
+  }
+
+  /**
+   * Auto-detect and track a command execution from a Discord Message object.
+   * Useful for traditional prefix-based bots.
+   *
+   * @param message - The Discord message object
+   * @param commandName - The name of the command (e.g. "play")
+   * @example
+   * ```ts
+   * client.on('messageCreate', (message) => {
+   *   if (message.content.startsWith('!play')) {
+   *     cordia.trackMessage(message, 'play');
+   *   }
+   * });
+   * ```
+   */
+  trackMessage(message: any, commandName: string): void {
+    this.ensureNotDestroyed();
+    this.commands.trackFromMessage(message, commandName);
   }
 
   // ─────────────────────────────────────────────────────────
@@ -282,7 +294,7 @@ export class CordiaClient {
         
         // VERSION HANDSHAKE: Check if SDK is out of date
         const versioning = (response as any).versioning;
-        const currentVersion = '1.2.1'; // Current local version
+        const currentVersion = '1.2.2'; // Current local version
         
         if (versioning) {
           if (versioning.latestSdkVersion !== currentVersion) {
